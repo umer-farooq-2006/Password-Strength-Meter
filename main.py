@@ -1,61 +1,63 @@
+import streamlit as st
 import re
 import random
 import string
 
+# Function to check password strength
 def check_password_strength(password):
     score = 0
+    messages = []
 
-    # Length Check
     if len(password) >= 8:
         score += 1
     else:
-        print("❌ Password should be at least 8 characters long.")
+        messages.append("❌ Password should be at least 8 characters long.")
 
-    # Uppercase & Lowercase
     if re.search(r"[A-Z]", password) and re.search(r"[a-z]", password):
         score += 1
     else:
-        print("❌ Include both uppercase and lowercase letters.")
+        messages.append("❌ Include both uppercase and lowercase letters.")
 
-    # Digit Check
     if re.search(r"\d", password):
         score += 1
     else:
-        print("❌ Add at least one number (0-9).")
+        messages.append("❌ Add at least one number (0-9).")
 
-    # Special Characters
     if re.search(r"[!@#$%^&*]", password):
         score += 1
     else:
-        print("❌ Include at least one special character (!@#$%^&*).")
+        messages.append("❌ Include at least one special character (!@#$%^&*).")
 
-    # Common Weak Passwords
     weak_passwords = ["password", "12345678", "qwerty", "password123", "admin"]
     if password.lower() in weak_passwords:
-        print("❌ This is a commonly used password. Choose something more secure.")
-        score = 0  # Force weak if it's common
+        messages.append("❌ This is a commonly used password. Choose something more secure.")
+        score = 0
 
-    # Strength Rating
-    if score == 4:
-        print("✅ Strong Password!")
-    elif score == 3:
-        print("⚠️ Moderate Password - Consider adding more security features.")
-    else:
-        print("❌ Weak Password - Improve it using the suggestions above.")
+    return score, messages
 
-# Password Generator (Optional Feature)
+# Function to suggest strong password
 def suggest_password(length=12):
     chars = string.ascii_letters + string.digits + "!@#$%^&*"
     return ''.join(random.choice(chars) for _ in range(length))
 
-# Main Program
-user_choice = input("Check (C) a password or Suggest (S) a strong password? ").lower()
+# Streamlit App UI
+st.title("🔐 Password Strength Checker")
 
-if user_choice == 'c':
-    password = input("Enter your password: ")
-    check_password_strength(password)
-elif user_choice == 's':
-    strong_password = suggest_password()
-    print("🔐 Suggested Strong Password:", strong_password)
-else:
-    print("Invalid option.")
+option = st.radio("Choose an option:", ["Check Password", "Suggest Password"])
+
+if option == "Check Password":
+    password = st.text_input("Enter your password", type="password")
+    if password:
+        score, messages = check_password_strength(password)
+        for msg in messages:
+            st.error(msg)
+        if score == 4:
+            st.success("✅ Strong Password!")
+        elif score == 3:
+            st.warning("⚠️ Moderate Password - Consider improving it.")
+        else:
+            st.error("❌ Weak Password - Follow suggestions above.")
+elif option == "Suggest Password":
+    length = st.slider("Password length", min_value=8, max_value=24, value=12)
+    st.write("🔐 Suggested Strong Password:")
+    st.code(suggest_password(length))
